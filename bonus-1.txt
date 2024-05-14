@@ -1,0 +1,19 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "SQS Queue Stack",
+  "Resources": {
+    "MySQSQueue": {
+      "Type": "AWS::SQS::Queue",
+      "Properties": {
+        "QueueName": "KGQueue"
+      }
+    }
+  },
+  "Outputs": {
+    "QueueURL": {
+      "Value": {
+        "Ref": "MySQSQueue"
+      }
+    }
+  }
+}

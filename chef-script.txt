@@ -1,0 +1,30 @@
+package 'httpd' do
+  action :install
+end
+
+service 'httpd' do
+  action :enable
+end
+
+file '/etc/motd' do
+  owner 'root'
+  group 'root'
+  mode '0644'
+  content 'Hello world'
+end
+
+user 'wilfred.banigo' do
+  action :create
+end
+
+cron 'test_command' do
+  minute '45'
+  hour '5'
+  command 'test_command'
+  user 'wilfred.banigo'
+end
+
+execute 'set_timezone' do
+  command 'timedatectl set-timezone Europe/London'
+  action :run
+end

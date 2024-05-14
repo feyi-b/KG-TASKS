@@ -1,0 +1,106 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "KG DevOps interview CF stack",
+  "Resources": {
+    "InterviewEC2Instance": {
+      "Type": "AWS::EC2::Instance",
+      "Properties": {
+        "InstanceType": "t2.nano",
+        "ImageId": "ami-047bb4163c506cd98",
+        "SourceDestCheck": false,
+        "UserData": {
+          "Fn::Base64": {
+            "Fn::Join": [
+              "",
+              [
+                "#!/bin/bash\n",
+                "yum -y update\n"
+              ]
+            ]
+          }
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Wilfred Banigo"
+          }
+        ]
+      }
+    },
+    "ALB": {
+      "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
+      "Properties": {
+        "Name": "InterviewALB",
+        "Scheme": "internet-facing",
+        "Subnets": [
+          "subnet-1a2b3c4d",
+          "subnet-5e6f7g8h"
+        ],
+        "SecurityGroups": [
+          "sg-0123456789abcdef0"
+        ]
+      }
+    },
+    "ALBListener": {
+      "Type": "AWS::ElasticLoadBalancingV2::Listener",
+      "Properties": {
+        "DefaultActions": [
+          {
+            "Type": "forward",
+            "TargetGroupArn": {
+              "Ref": "TargetGroup"
+            }
+          }
+        ],
+        "LoadBalancerArn": {
+          "Ref": "ALB"
+        },
+        "Port": 80,
+        "Protocol": "HTTP"
+      }
+    },
+    "TargetGroup": {
+      "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
+      "Properties": {
+        "Name": "InterviewTargetGroup",
+        "Port": 80,
+        "Protocol": "HTTP",
+        "VpcId": "vpc-12345678",
+        "HealthCheckIntervalSeconds": 30,
+        "HealthCheckProtocol": "HTTP",
+        "HealthCheckPath": "/",
+        "Matcher": {
+          "HttpCode": "200"
+        }
+      }
+    },
+    "InstanceTarget": {
+      "Type": "AWS::ElasticLoadBalancingV2::Target",
+      "Properties": {
+        "TargetGroupArn": {
+          "Ref": "TargetGroup"
+        },
+        "Port": 80,
+        "TargetId": {
+          "Ref": "InterviewEC2Instance"
+        }
+      }
+    }
+  },
+  "Outputs": {
+    "EC2InstanceId": {
+      "Value": {
+        "Ref": "InterviewEC2Instance"
+      }
+    },
+    "ALBDNSName": {
+      "Description": "DNS name of the ALB",
+      "Value": {
+        "Fn::GetAtt": [
+          "ALB",
+          "DNSName"
+        ]
+      }
+    }
+  }
+}
