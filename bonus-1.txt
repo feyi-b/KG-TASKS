@@ -12,7 +12,7 @@
   "Outputs": {
     "QueueURL": {
       "Value": {
-        "Ref": "MySQSQueue"
+        "Ref": "KGQueue"
       }
     }
   }
