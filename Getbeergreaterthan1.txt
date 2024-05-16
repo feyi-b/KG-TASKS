@@ -1,0 +1,55 @@
+#!/bin/bash
+
+# Function to print beer name and ABV
+print_beer_info() {
+    local beer_name=$(echo "$1" | jq -r '.name')
+    local abv=$(echo "$1" | jq -r '.abv')
+    echo "$beer_name,$abv"
+}
+
+# Check if ABV threshold parameter is provided
+if [ $# -eq 0 ]; then
+    echo "Usage: $0 <ABV_threshold>"
+    exit 1
+fi
+
+# Validate if the provided ABV threshold is a number
+if ! [[ "$1" =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
+    echo "Error: ABV threshold must be a number."
+    exit 1
+fi
+
+# Set the ABV threshold from the parameter
+ABV_THRESHOLD=$1
+
+# API endpoint URL
+API_URL="https://api.punkapi.com/v2/beers"
+
+# Make GET request to the API and retrieve JSON response
+response=$(curl -s "$API_URL")
+
+# Check if response is empty
+if [ -z "$response" ]; then
+    # If the direct API URL fails, try the mirrored URL
+    response=$(curl -s "https://s3-eu-west-1.amazonaws.com/kg-it/devopsTest/api-punkapi-com-v2-beers.json")
+fi
+
+# Check if response is still empty
+if [ -z "$response" ]; then
+    echo "Failed to fetch beer data from the API."
+    exit 1
+fi
+
+# Filter beers with ABV greater than the specified threshold
+filtered_response=$(echo "$response" | jq --argjson threshold "$ABV_THRESHOLD" '.[] | select(.abv > $threshold)')
+
+# Sort beers by ABV in ascending order
+sorted_response=$(echo "$filtered_response" | jq -s 'sort_by(.abv)')
+
+# Print header
+echo "Beer Name,ABV"
+
+# Loop through each beer in the sorted and filtered response and print name and ABV
+while IFS= read -r beer; do
+    print_beer_info "$beer"
+done <<< "$(echo "$sorted_response" | jq -c '.[]')"
